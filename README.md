@@ -106,13 +106,13 @@ flowchart TD
 
 ## 🎯 Reward Design & Environment Mechanics
 
-| Event | Reward Formulation | Rationale & Objective |
-| :--- | :--- | :--- |
-| **Tile Merge** | $+\sum \log_2(\text{merged\_val})$ | Scales linearly with tile tier ($2+2=4 \to 2.0$, $1024+1024=2048 \to 11.0$), preventing exponential gradient destabilization. |
-| **Empty Cells** | $+0.1 \times N_{\text{empty}}$ | Provides continuous incentive to maintain open maneuver space and prevent board congestion. |
-| **Corner Anchor** | $+0.5$ (if $\text{max\_tile} \ge 32$ is in corner) | Encourages classic monotonic snake/corner stacking strategies. |
-| **Invalid Action** | $-2.0$ | Penalizes moves that fail to alter board topology. |
-| **Game Over** | $-5.0$ | Terminal penalty when no valid moves remain. |
+| Event              | Reward Formulation                                 | Rationale & Objective                                                                                                         |
+| :----------------- | :------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| **Tile Merge**     | $+\sum \log_2(\text{merged\_val})$                 | Scales linearly with tile tier ($2+2=4 \to 2.0$, $1024+1024=2048 \to 11.0$), preventing exponential gradient destabilization. |
+| **Empty Cells**    | $+0.1 \times N_{\text{empty}}$                     | Provides continuous incentive to maintain open maneuver space and prevent board congestion.                                   |
+| **Corner Anchor**  | $+0.5$ (if $\text{max\_tile} \ge 32$ is in corner) | Encourages classic monotonic snake/corner stacking strategies.                                                                |
+| **Invalid Action** | $-2.0$                                             | Penalizes moves that fail to alter board topology.                                                                            |
+| **Game Over**      | $-5.0$                                             | Terminal penalty when no valid moves remain.                                                                                  |
 
 ---
 
@@ -137,8 +137,18 @@ The evaluation suite ([`evaluate.py`](file:///C:/web/2048ai/evaluate.py)) suppor
 ```
 
 **1-Step Expectimax Formulation:**
-$$\mathbb{E}[V(s')] = \sum_{c \in \text{empty}} \frac{1}{|\text{empty}|} \left( 0.9 \cdot \max_{a'} Q(s'_{c \leftarrow 2}, a') + 0.1 \cdot \max_{a'} Q(s'_{c \leftarrow 4}, a') \right)$$
-$$\text{Action}^* = \arg\max_{a \in \mathcal{A}_{\text{valid}}} \left[ r_{\text{merge}}(s, a) + \gamma \cdot \mathbb{E}[V(s')] + 0.2 \cdot |\text{empty}| \right]$$
+
+$$
+\mathbb{E}[V(s')] = \sum_{c \in \mathrm{empty}} \frac{1}{|\mathrm{empty}|}
+\left( 0.9 \cdot \max_{a'} Q(s'_{c \leftarrow 2}, a')
++ 0.1 \cdot \max_{a'} Q(s'_{c \leftarrow 4}, a') \right)
+$$
+
+$$
+\mathrm{Action}^* = \arg\max_{a \in \mathcal{A}_{\mathrm{valid}}}
+\left[ r_{\mathrm{merge}}(s, a) + \gamma \cdot \mathbb{E}[V(s')]
++ 0.2 \cdot |\mathrm{empty}| \right]
+$$
 
 ---
 
@@ -159,12 +169,14 @@ $$\text{Action}^* = \arg\max_{a \in \mathcal{A}_{\text{valid}}} \left[ r_{\text{
 ## ⚙️ Installation & Requirements
 
 ### Prerequisites
+
 - **Python:** 3.10 or higher
 - **GPU (Recommended):** NVIDIA GPU with CUDA support for rapid Expectimax batch inference (CPU is automatically supported).
 
 ### Setup Instructions
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/<your-username>/2048ai.git
    cd 2048ai
@@ -189,6 +201,7 @@ $$\text{Action}^* = \arg\max_{a \in \mathcal{A}_{\text{valid}}} \left[ r_{\text{
 
 > [!TIP]
 > If you have an NVIDIA GPU, install PyTorch with CUDA support to maximize Expectimax evaluation speed:
+>
 > ```bash
 > pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 > ```
@@ -206,6 +219,7 @@ python train_dqn.py
 ```
 
 **Training Features:**
+
 - **Auto Checkpointing:** Model weights, optimizer states, and epsilon parameters are automatically saved whenever a new high score or higher max tile is attained.
 - **Periodic Live GUI:** Visual gameplay windows display every 50 episodes to inspect policy development.
 - **Safe Interruption (`Ctrl+C`):** Gracefully exits upon terminal interrupt and preserves current learning state to `best_2048_model.pth`.
@@ -217,6 +231,7 @@ python train_dqn.py
 Evaluate the trained checkpoint with pure exploitation ($\epsilon = 0$):
 
 #### A. Watch the AI Play Live (Interactive GUI)
+
 ```bash
 # Watch 1 game with 1-Step Expectimax (0.03s step delay)
 python evaluate.py --games 1 --visualize --delay 0.03
@@ -226,6 +241,7 @@ python evaluate.py --games 1 --visualize --mode direct --delay 0.05
 ```
 
 #### B. High-Speed Headless Benchmark
+
 ```bash
 # Run a 10-game benchmark with Expectimax Lookahead
 python evaluate.py --games 10 --mode expectimax
@@ -236,13 +252,13 @@ python evaluate.py --games 20 --mode direct
 
 #### CLI Options Reference for `evaluate.py`:
 
-| Argument | Type | Default | Description |
-| :--- | :---: | :---: | :--- |
-| `--games` | `int` | `5` | Number of test games to run. |
-| `--mode` | `str` | `expectimax` | Action selection policy: `expectimax` or `direct`. |
-| `--visualize` | `flag` | `False` | Renders interactive real-time Matplotlib GUI window. |
-| `--delay` | `float` | `0.03` | Step delay in seconds during visualization. |
-| `--model` | `str` | `best_2048_model.pth` | Path to PyTorch model checkpoint. |
+| Argument      |  Type   |        Default        | Description                                          |
+| :------------ | :-----: | :-------------------: | :--------------------------------------------------- |
+| `--games`     |  `int`  |          `5`          | Number of test games to run.                         |
+| `--mode`      |  `str`  |     `expectimax`      | Action selection policy: `expectimax` or `direct`.   |
+| `--visualize` | `flag`  |        `False`        | Renders interactive real-time Matplotlib GUI window. |
+| `--delay`     | `float` |        `0.03`         | Step delay in seconds during visualization.          |
+| `--model`     |  `str`  | `best_2048_model.pth` | Path to PyTorch model checkpoint.                    |
 
 ---
 
@@ -253,18 +269,19 @@ The following statistics summarize performance benchmarks using the trained chec
 ### Latest Checkpoint Performance
 
 > **Test Environment & Hardware:**
+>
 > - **Inference Mode:** 1-Step Expectimax Lookahead Search (GPU-accelerated batching)
 > - **Compute Device:** NVIDIA GeForce RTX 3050 Ti Laptop GPU (CUDA)
 > - **Sample Runs:** Multi-game staged evaluation benchmark
 
-| Metric | Result | Notes |
-| :--- | :---: | :--- |
-| **Peak Score** | **6,632** | Achieved with clean tile monotonicity and stable corner positioning |
-| **Mean Score** | **~3,922+** | Substantially outperforms single DQN baselines |
-| **Max Tile Achieved** | **512** | Overcomes standard vanilla DQN plateau (128-256) |
-| **Tile $\ge 128$ Rate** | **100%** | Highly consistent mid-game board structuring |
-| **Tile $\ge 256$ Rate** | **100%** | Demonstrates reliable early-to-mid board survival |
-| **Tile $\ge 512$ Rate** | **~33.3%** | Stepping stone to higher merge tiers |
+| Metric                  |   Result    | Notes                                                               |
+| :---------------------- | :---------: | :------------------------------------------------------------------ |
+| **Peak Score**          |  **6,632**  | Achieved with clean tile monotonicity and stable corner positioning |
+| **Mean Score**          | **~3,922+** | Substantially outperforms single DQN baselines                      |
+| **Max Tile Achieved**   |   **512**   | Overcomes standard vanilla DQN plateau (128-256)                    |
+| **Tile $\ge 128$ Rate** |  **100%**   | Highly consistent mid-game board structuring                        |
+| **Tile $\ge 256$ Rate** |  **100%**   | Demonstrates reliable early-to-mid board survival                   |
+| **Tile $\ge 512$ Rate** | **~33.3%**  | Stepping stone to higher merge tiers                                |
 
 ```text
 Max Tile Achievement Distribution:
@@ -277,10 +294,13 @@ Max Tile Achievement Distribution:
 ```
 
 > [!NOTE]
+>
 > ### 🔄 Continuous Updates & Development Roadmap
+>
 > This model is under **active ongoing training**. Performance metrics and benchmark distributions in this section **will be continuously updated** as new checkpoints are saved.
-> 
+>
 > **Upcoming Targets & Milestones:**
+>
 > - [ ] **Consistent 1024 & 2048 Tiles:** Extend training past 2,000+ episodes with refined replay buffer management to consistently produce **1024** and **2048** tiles.
 > - [ ] **2-Step Expectimax Lookahead:** Implement 2-ply search with alpha-beta / beam pruning to preserve high decision quality with minimal latency.
 > - [ ] **Monotonicity Reward Tuning:** Introduce directional alignment incentives to prevent inverse board trapping during late-game play.
@@ -290,23 +310,24 @@ Max Tile Achievement Distribution:
 
 ## 📊 Hyperparameters Table
 
-| Hyperparameter | Value | Description |
-| :--- | :---: | :--- |
-| **Batch Size** | `64` | Mini-batch sample size drawn from replay memory. |
-| **Replay Memory Capacity** | `50,000` | Maximum transitions $(s, a, r, s', d, \mathcal{A}_{\text{valid}})$ stored. |
-| **Discount Factor ($\gamma$)** | `0.99` | Long-term reward discount rate. |
-| **Learning Rate** | `3e-4` | Adam optimizer learning rate. |
-| **Loss Function** | `SmoothL1Loss` | Huber loss for gradient outlier robustness. |
-| **Target Network Sync** | `250 steps` | Interval between target network weight updates. |
-| **Epsilon Start / Min** | `1.0` / `0.02` | Epsilon-greedy exploration boundary. |
-| **Epsilon Decay Rate** | `0.995` / episode | Balanced exploration decay reaching $\epsilon_{\min}$ across ~800 episodes. |
-| **Gradient Clipping Norm** | `1.0` | Maximum norm for gradient clipping. |
+| Hyperparameter                 |       Value       | Description                                                                 |
+| :----------------------------- | :---------------: | :-------------------------------------------------------------------------- |
+| **Batch Size**                 |       `64`        | Mini-batch sample size drawn from replay memory.                            |
+| **Replay Memory Capacity**     |     `50,000`      | Maximum transitions $(s, a, r, s', d, \mathcal{A}_{\text{valid}})$ stored.  |
+| **Discount Factor ($\gamma$)** |      `0.99`       | Long-term reward discount rate.                                             |
+| **Learning Rate**              |      `3e-4`       | Adam optimizer learning rate.                                               |
+| **Loss Function**              |  `SmoothL1Loss`   | Huber loss for gradient outlier robustness.                                 |
+| **Target Network Sync**        |    `250 steps`    | Interval between target network weight updates.                             |
+| **Epsilon Start / Min**        |  `1.0` / `0.02`   | Epsilon-greedy exploration boundary.                                        |
+| **Epsilon Decay Rate**         | `0.995` / episode | Balanced exploration decay reaching $\epsilon_{\min}$ across ~800 episodes. |
+| **Gradient Clipping Norm**     |       `1.0`       | Maximum norm for gradient clipping.                                         |
 
 ---
 
 ## 🛡️ System Robustness & Checkpointing
 
 Saved checkpoints (`best_2048_model.pth`) are fully comprehensive and contain:
+
 1. `model_state`: Weights and biases of the Dueling Convolutional DQN.
 2. `optimizer_state`: Adam optimizer momentum vectors and adaptive learning rates.
 3. `epsilon`: Current exploration parameter at checkpoint time.
